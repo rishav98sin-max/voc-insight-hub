@@ -336,8 +336,11 @@ Snippets:
 
 status.success("Groq labeling complete.")
 
-themes_df = pd.DataFrame(themes).sort_values("priority_score", ascending=False)
-
+themes_df = (
+    pd.DataFrame(themes)
+    .sort_values("priority_score", ascending=False)
+    .reset_index(drop=True)
+)
 st.session_state["themes_df"] = themes_df
 st.session_state["clustered_df"] = df
 
@@ -407,3 +410,4 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
+

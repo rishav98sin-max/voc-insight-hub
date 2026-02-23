@@ -209,11 +209,11 @@ def create_ppt_summary(themes_df: pd.DataFrame) -> bytes:
     table_shape = slide.shapes.add_table(rows, cols, left, top, width, height)
     table = table_shape.table
 
-    # Set column widths
-    table.columns[0].width = Inches(3)
-    table.columns[1].width = Inches(2)
-    table.columns[2].width = Inches(2)
-    table.columns[3].width = Inches(2)
+    # Set column widths [web:289]
+    table.columns[0].width = Inches(2.5)
+    table.columns[1].width = Inches(1.2)
+    table.columns[2].width = Inches(1)
+    table.columns[3].width = Inches(4.3)  # Make "Next Step" column wider
 
     # Header row
     headers = ["Theme", "Priority", "Owner", "Next Step"]
@@ -226,14 +226,27 @@ def create_ppt_summary(themes_df: pd.DataFrame) -> bytes:
     # Data rows
     top5 = themes_df.head(5)
     for row_idx, (_, row) in enumerate(top5.iterrows(), start=1):
-        table.cell(row_idx, 0).text = str(row["theme_name"])[:50]
-        table.cell(row_idx, 1).text = f"{row['priority_score']:.1f}"
-        table.cell(row_idx, 2).text = str(row["owner"])
-        table.cell(row_idx, 3).text = str(row["next_step"])[:60] + "..."
+        # Theme name (no truncation)
+        cell = table.cell(row_idx, 0)
+        cell.text = str(row["theme_name"])
+        cell.text_frame.word_wrap = True  # Enable wrapping [web:281]
+        cell.text_frame.paragraphs[0].font.size = Pt(10)
 
-        # Set font size for readability
-        for col_idx in range(4):
-            table.cell(row_idx, col_idx).text_frame.paragraphs[0].font.size = Pt(10)
+        # Priority
+        cell = table.cell(row_idx, 1)
+        cell.text = f"{row['priority_score']:.1f}"
+        cell.text_frame.paragraphs[0].font.size = Pt(10)
+
+        # Owner
+        cell = table.cell(row_idx, 2)
+        cell.text = str(row["owner"])
+        cell.text_frame.paragraphs[0].font.size = Pt(10)
+
+        # Next Step (FULL TEXT - no truncation) [web:281]
+        cell = table.cell(row_idx, 3)
+        cell.text = str(row["next_step"])  # No [:60] truncation
+        cell.text_frame.word_wrap = True  # Enable wrapping
+        cell.text_frame.paragraphs[0].font.size = Pt(9)  # Slightly smaller font
 
     # Slides 3+: One slide per top 5 theme [web:238]
     for _, row in top5.iterrows():
@@ -260,9 +273,9 @@ def create_ppt_summary(themes_df: pd.DataFrame) -> bytes:
         p.level = 0
         p.font.size = Pt(14)
 
-        # Next step
+        # Next step (FULL TEXT)
         p = tf.add_paragraph()
-        p.text = f"Next Step: {row['next_step']}"
+        p.text = f"Next Step: {row['next_step']}"  # No truncation
         p.level = 0
         p.font.size = Pt(14)
 
@@ -277,6 +290,7 @@ def create_ppt_summary(themes_df: pd.DataFrame) -> bytes:
     prs.save(binary_output)
     binary_output.seek(0)
     return binary_output.getvalue()
+
 
 
 # ---------- UI controls ----------
@@ -582,4 +596,5 @@ with col3:
         mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         use_container_width=True,
     )
+
 

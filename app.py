@@ -99,8 +99,12 @@ def groq_generate_json(prompt: str, schema: dict, model: str) -> dict:
     }
 
     r = requests.post(GROQ_CHAT_URL, headers=headers, json=payload, timeout=120)
-    r.raise_for_status()
-    data = r.json()
+if not r.ok:
+    # This prints Groq's real error message (why it's 400)
+    raise RuntimeError(f"Groq HTTP {r.status_code}: {r.text}")
+data = r.json()
+    
+    
 
     content = data["choices"][0]["message"]["content"]
     return json.loads(content)
@@ -361,3 +365,4 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
+

@@ -9,8 +9,8 @@ import streamlit as st
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import KMeans
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "llama3:instruct"
+GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"  # Groq OpenAI-compatible endpoint [web:631]
+DEFAULT_GROQ_MODEL = "llama-3.1-70b-versatile"
 
 # Ollama structured outputs schema (also included in prompt for grounding) [web:307][web:295]
 OUTPUT_SCHEMA = {
@@ -68,18 +68,38 @@ def cached_embeddings(text_list: list[str], model_name: str, file_hash: str, max
     emb = embedder.encode(text_list, show_progress_bar=False)
     return np.array(emb)
 
-def ollama_generate_json(prompt: str) -> dict:
+@st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
+def groq_generate_json(prompt: str, schema: dict, model: str) -> dict:
+    api_key = st.secrets["GROQ_API_KEY"]  # Streamlit secrets [web:723]
+
     payload = {
-        "model": MODEL_NAME,
-        "prompt": prompt,
-        "stream": False,
-        "format": OUTPUT_SCHEMA,   # structured outputs via schema [web:295]
-        "keep_alive": "30m",
-        "options": {"num_predict": 300, "temperature": 0},  # deterministic outputs [web:307]
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "Return ONLY valid JSON that matches the provided schema."},
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0,
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "voc_theme_schema",
+                "strict": True,     # guaranteed schema compliance [web:709]
+                "schema": schema,
+            },
+        },
     }
-    r = requests.post(OLLAMA_URL, json=payload, timeout=600)  # /api/generate [web:295]
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+
+    r = requests.post(GROQ_CHAT_URL, headers=headers, json=payload, timeout=120)  # endpoint [web:631]
     r.raise_for_status()
-    return json.loads(r.json()["response"])
+    data = r.json()
+
+    content = data["choices"][0]["message"]["content"]
+    return json.loads(content)
 
 @st.cache_data
 def df_to_csv_bytes(df: pd.DataFrame) -> bytes:
@@ -169,7 +189,8 @@ with st.spinner("Embedding + clustering..."):
     km = KMeans(n_clusters=k_eff, n_init="auto", random_state=42)
     df["cluster"] = km.fit_predict(emb)
 
-st.caption(f"Run settings: k={k_eff}, rows={len(df)}, model={MODEL_NAME}")
+model = st.secrets.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
+st.caption(f"Run settings: k={k_eff}, rows={len(df)}, model={model}")
 
 # ---------- Theme scoring + labeling ----------
 themes = []
@@ -221,23 +242,21 @@ Rules:
   - low = ambiguous or mixed topics
 Return ONLY JSON (no markdown, no extra text). [web:295]
 
-Output JSON must conform to this schema:
-{json.dumps(OUTPUT_SCHEMA, ensure_ascii=False)} [web:307]
-
 Snippets:
 {json.dumps(quotes, ensure_ascii=False)}
 """.strip()
 
-    with st.spinner(f"Labeling theme {idx}/{total} with local LLM..."):
+    with st.spinner(f"Labeling theme {idx}/{total} with Groq LLM..."):
         try:
-            obj = ollama_generate_json(prompt)
+            model = st.secrets.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
+            obj = groq_generate_json(prompt, OUTPUT_SCHEMA, model)
         except Exception:
             obj = {
                 "theme_name": f"Theme {c}",
-                "problem_summary": "Local LLM call failed. Theme label is a placeholder.",
+                "problem_summary": "Groq call failed. Theme label is a placeholder.",
                 "sentiment": "neutral",
                 "opportunity": "Opportunity: Retry with fewer rows/themes or increase timeout.",
-                "next_step": "Retry labeling after checking Ollama.",
+                "next_step": "Retry labeling after checking Groq / rate limits.",
                 "success_metric": "Activation rate",
                 "owner": "PM",
                 "confidence": "low",
@@ -309,3 +328,4 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
+

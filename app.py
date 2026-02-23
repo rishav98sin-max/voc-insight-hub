@@ -279,20 +279,20 @@ Snippets:
 
     themes.append(
         {
-            "Cluster": int(c),
-            "Count": count,
-            "Average_severity": avg_sev,
-            "Avg_Plan_Weight": avg_plan_weight,
-            "Priority_Score": float(priority_score),
-            "Theme_Name": obj.get("theme_name"),
-            "Problem_Summary": obj.get("problem_summary"),
-            "Sentiment": obj.get("sentiment"),
-            "Opportunity": obj.get("opportunity"),
-            "Next_Step": obj.get("next_step"),
-            "Success_Metric": obj.get("success_metric"),
-            "Owner": obj.get("owner"),
-            "Confidence": obj.get("confidence"),
-            "Evidence_Quotes": evidence,
+            "cluster": int(c),
+            "count": count,
+            "avg_severity": avg_sev,
+            "avg_plan_weight": avg_plan_weight,
+            "priority_score": float(priority_score),
+            "theme_name": obj.get("theme_name"),
+            "problem_summary": obj.get("problem_summary"),
+            "sentiment": obj.get("sentiment"),
+            "opportunity": obj.get("opportunity"),
+            "next_step": obj.get("next_step"),
+            "success_metric": obj.get("success_metric"),
+            "owner": obj.get("owner"),
+            "confidence": obj.get("confidence"),
+            "evidence_quotes": evidence,
         }
     )
 
@@ -359,8 +359,6 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
-
-
 
 
 

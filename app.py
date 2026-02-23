@@ -83,7 +83,7 @@ def groq_generate_json(prompt: str, schema: dict, model: str) -> dict:
             "type": "json_schema",
             "json_schema": {
                 "name": "voc_theme_schema",
-                "strict": True,     # guaranteed schema compliance [web:709]
+                "strict": False,     # guaranteed schema compliance [web:709]
                 "schema": schema,
             },
         },
@@ -329,6 +329,7 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
+
 
 
 

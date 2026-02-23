@@ -294,6 +294,21 @@ def create_ppt_summary(themes_df: pd.DataFrame) -> bytes:
 
 
 # ---------- UI controls ----------
+from pathlib import Path
+
+APP_DIR = Path(__file__).resolve().parent
+SAMPLE_PATH = APP_DIR / "sample_feedback.csv"
+
+if SAMPLE_PATH.exists():
+    st.download_button(
+        "Download sample_feedback.csv",
+        data=SAMPLE_PATH.read_bytes(),
+        file_name="sample_feedback.csv",
+        mime="text/csv",
+        use_container_width=True,
+    )
+    st.caption("Tip: Download this file, then upload it to try the app quickly.")
+
 uploaded = st.file_uploader("Upload feedback CSV (needs a 'text' column)", type=["csv"])
 
 k = st.slider("Number of themes", 2, 12, 8)
@@ -596,5 +611,6 @@ with col3:
         mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         use_container_width=True,
     )
+
 
 

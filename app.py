@@ -127,8 +127,8 @@ def plan_to_weight(x):
 uploaded = st.file_uploader("Upload feedback CSV (needs a 'text' column)", type=["csv"])
 
 # Use lower defaults so the demo finishes fast on Streamlit Cloud
-k = st.slider("Number of themes", 2, 12, 5)
-max_rows = st.slider("Max rows to analyze (speed)", 50, 2000, 80)
+k = st.slider("Number of themes", 2, 12, 8)
+max_rows = st.slider("Max rows to analyze (speed)", 50, 2000, 200)
 
 if uploaded is None:
     st.info("Upload sample_feedback.csv")
@@ -359,6 +359,7 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
+
 
 
 

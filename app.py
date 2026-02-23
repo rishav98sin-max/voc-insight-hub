@@ -181,18 +181,6 @@ uploaded = st.file_uploader("Upload feedback CSV (needs a 'text' column)", type=
 k = st.slider("Number of themes", 2, 12, 8)
 max_rows = st.slider("Max rows to analyze (speed)", 50, 2000, 200)
 
-col_a, col_b = st.columns([1, 1])
-with col_a:
-    if st.button("Generate insights", type="primary", use_container_width=True):
-        st.session_state["has_results"] = True
-with col_b:
-    if st.button("Reset / Run again", use_container_width=True):
-        st.session_state["has_results"] = False
-        st.session_state["themes_df"] = None
-        st.session_state["clustered_df"] = None
-        st.session_state["last_file_hash"] = None
-        st.rerun()
-
 if uploaded is None:
     st.info("Upload sample_feedback.csv")
     st.stop()
@@ -244,6 +232,17 @@ st.dataframe(
     column_config=make_column_config(preview_pretty),
     hide_index=True,
 )
+col_a, col_b = st.columns([1, 1])
+with col_a:
+    if st.button("Generate insights", type="primary", use_container_width=True):
+        st.session_state["has_results"] = True
+with col_b:
+    if st.button("Reset / Run again", use_container_width=True):
+        st.session_state["has_results"] = False
+        st.session_state["themes_df"] = None
+        st.session_state["clustered_df"] = None
+        st.session_state["last_file_hash"] = None
+        st.rerun()
 
 # If we already have results, just render them (don’t force rerun)
 if st.session_state["has_results"] and st.session_state["themes_df"] is not None and st.session_state["clustered_df"] is not None:
@@ -459,3 +458,4 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
+

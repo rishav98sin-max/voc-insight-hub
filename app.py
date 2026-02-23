@@ -252,16 +252,16 @@ Snippets:
             obj = groq_generate_json(prompt, OUTPUT_SCHEMA, model)
         except Exception as e:
             st.error(f"Groq call failed for cluster {c}: {e}")
-            obj = {
-            "theme_name": f"Theme {c}",
-            "problem_summary": "Groq call failed. Theme label is a placeholder.",
-            "sentiment": "neutral",
-            "opportunity": "Opportunity: Retry with fewer rows/themes or increase timeout.",
-            "next_step": "Retry labeling after checking Groq / rate limits.",
-            "success_metric": "Activation rate",
-            "owner": "PM",
-            "confidence": "low",
-        }
+                obj = {
+                "theme_name": f"Theme {c}",
+                "problem_summary": "Groq call failed. Theme label is a placeholder.",
+                "sentiment": "neutral",
+                "opportunity": "Opportunity: Retry with fewer rows/themes or increase timeout.",
+                "next_step": "Retry labeling after checking Groq / rate limits.",
+                "success_metric": "Activation rate",
+                "owner": "PM",
+                "confidence": "low",
+            }
 
     themes.append({
         "cluster": int(c),
@@ -329,6 +329,7 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
+
 
 
 

@@ -356,7 +356,7 @@ if st.session_state["has_results"] and st.session_state["themes_df"] is not None
     df_clustered = st.session_state["clustered_df"]
 else:
     if not st.session_state["has_results"]:
-        st.info("Click "Generate insights" to run clustering + Groq labeling.")
+        st.info("Click \"Generate insights\" to run clustering + Groq labeling.")
         st.stop()
 
     # ---------- Debug checkpoints ----------
@@ -582,3 +582,4 @@ with col3:
         mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         use_container_width=True,
     )
+

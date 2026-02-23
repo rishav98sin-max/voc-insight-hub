@@ -83,14 +83,8 @@ def groq_generate_json(prompt: str, schema: dict, model: str) -> dict:
             {"role": "user", "content": prompt},
         ],
         "temperature": 0,
-        "response_format": {
-            "type": "json_schema",
-            "json_schema": {
-                "name": "voc_theme_schema",
-                "strict": False,  # best-effort mode; strict:true requires supported models [web:709]
-                "schema": schema,
-            },
-        },
+        "response_format": {"type": "json_object"},
+
     }
 
     headers = {
@@ -365,6 +359,7 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
+
 
 
 

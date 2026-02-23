@@ -44,6 +44,16 @@ OUTPUT_SCHEMA = {
 st.set_page_config(page_title="VoC Insight Agent", layout="wide")
 st.title("VoC Insight Hub")
 
+# Persist results across reruns (selectbox clicks, etc.) [web:186]
+if "has_results" not in st.session_state:
+    st.session_state["has_results"] = False
+if "themes_df" not in st.session_state:
+    st.session_state["themes_df"] = None
+if "clustered_df" not in st.session_state:
+    st.session_state["clustered_df"] = None
+if "last_file_hash" not in st.session_state:
+    st.session_state["last_file_hash"] = None
+
 
 # ---------- Helpers ----------
 @st.cache_resource
@@ -68,7 +78,7 @@ def read_uploaded_csv(uploaded_file) -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def cached_embeddings(text_list: list[str], file_hash: str, max_rows: int) -> np.ndarray:
     embedder = load_embedder()
-    emb = embedder.encode(text_list, show_progress_bar=False)
+    emb = embedder.encode(text_list, show_progress_bar=False, normalize_embeddings=True)
     return np.array(emb)
 
 
@@ -125,33 +135,42 @@ def prettify_columns(df_in: pd.DataFrame) -> pd.DataFrame:
     return df2
 
 
-def make_column_config_for_themes(pretty_df: pd.DataFrame) -> dict:
-    # Use column_config to control header labels + widths [web:127][web:128]
+def make_column_config(pretty_df: pd.DataFrame) -> dict:
+    # Column config controls label + relative width [web:127]
+    cols = set(pretty_df.columns)
     cfg = {}
-    cols = list(pretty_df.columns)
 
-    def col(name: str, label: str, width: str):
+    def add(name: str, label: str, width: str):
         if name in cols:
             cfg[name] = st.column_config.Column(label=label, width=width)
 
-    # Narrow-ish columns
-    col("Theme Name", "Theme Name", "medium")
-    col("Priority Score", "Priority Score", "small")
-    col("Count", "Count", "small")
-    col("Owner", "Owner", "small")
-    col("Success Metric", "Success Metric", "medium")
-    col("Confidence", "Confidence", "small")
-    col("Sentiment", "Sentiment", "small")
-    col("Cluster", "Cluster", "small")
+    # Smaller columns
+    add("Theme Name", "Theme Name", "medium")
+    add("Priority Score", "Priority Score", "small")
+    add("Count", "Count", "small")
+    add("Owner", "Owner", "small")
+    add("Success Metric", "Success Metric", "medium")
+    add("Confidence", "Confidence", "small")
+    add("Sentiment", "Sentiment", "small")
+    add("Cluster", "Cluster", "small")
 
-    # Wide columns (text-heavy)
-    col("Problem Summary", "Problem Summary", "large")
-    col("Opportunity", "Opportunity", "large")
-    col("Next Step", "Next Step", "large")
-    col("Evidence Quotes", "Evidence Quotes", "large")
+    add("Feedback Id", "Feedback ID", "medium")
+    add("Product", "Product", "medium")
+    add("Date", "Date", "small")
+    add("Source", "Source", "medium")
+    add("Persona", "Persona", "small")
+    add("Plan", "Plan", "small")
+    add("Severity", "Severity", "small")
 
-    col("Avg Severity", "Avg Severity", "small")
-    col("Avg Plan Weight", "Avg Plan Weight", "small")
+    # Wider text columns
+    add("Problem Summary", "Problem Summary", "large")
+    add("Opportunity", "Opportunity", "large")
+    add("Next Step", "Next Step", "large")
+    add("Evidence Quotes", "Evidence Quotes", "large")
+    add("Text", "Text", "large")
+
+    add("Avg Severity", "Avg Severity", "small")
+    add("Avg Plan Weight", "Avg Plan Weight", "small")
 
     return cfg
 
@@ -161,6 +180,18 @@ uploaded = st.file_uploader("Upload feedback CSV (needs a 'text' column)", type=
 
 k = st.slider("Number of themes", 2, 12, 8)
 max_rows = st.slider("Max rows to analyze (speed)", 50, 2000, 200)
+
+col_a, col_b = st.columns([1, 1])
+with col_a:
+    if st.button("Generate insights", type="primary", use_container_width=True):
+        st.session_state["has_results"] = True
+with col_b:
+    if st.button("Reset / Run again", use_container_width=True):
+        st.session_state["has_results"] = False
+        st.session_state["themes_df"] = None
+        st.session_state["clustered_df"] = None
+        st.session_state["last_file_hash"] = None
+        st.rerun()
 
 if uploaded is None:
     st.info("Upload sample_feedback.csv")
@@ -178,6 +209,15 @@ except Exception as e:
 if "text" not in df_raw.columns:
     st.error("CSV must contain a 'text' column.")
     st.stop()
+
+# If user uploads a new file, invalidate prior results automatically
+if st.session_state["last_file_hash"] is None:
+    st.session_state["last_file_hash"] = file_hash
+elif st.session_state["last_file_hash"] != file_hash:
+    st.session_state["has_results"] = False
+    st.session_state["themes_df"] = None
+    st.session_state["clustered_df"] = None
+    st.session_state["last_file_hash"] = file_hash
 
 df = df_raw.copy()
 with st.expander("Filters", expanded=True):
@@ -197,79 +237,82 @@ if len(df) == 0:
     st.stop()
 
 st.subheader("Preview")
-st.dataframe(prettify_columns(df.head(20)), use_container_width=True)
+preview_pretty = prettify_columns(df.head(20))
+st.dataframe(
+    preview_pretty,
+    use_container_width=True,
+    column_config=make_column_config(preview_pretty),
+    hide_index=True,
+)
 
-run = st.button("Generate insights")
-
-if not run:
-    if "themes_df" in st.session_state:
-        st.subheader("Last run (saved in session)")
-        last_pretty = prettify_columns(st.session_state["themes_df"])
-        st.dataframe(
-            last_pretty,
-            use_container_width=True,
-            column_config=make_column_config_for_themes(last_pretty),
-        )
-    st.stop()
-
-# ---------- Debug checkpoints ----------
-st.info("Step 1/3: Starting embedding + clustering...")
-
-# ---------- Embedding + clustering ----------
-st.info("Step 2/3: Embedding texts now (first run may download model)...")
-with st.spinner("Embedding + clustering..."):
-    texts = df["text"].tolist()
-    emb = cached_embeddings(texts, file_hash, max_rows)
-
-    n_samples = emb.shape[0]
-    if n_samples < 2:
-        st.error("Not enough rows to cluster after filtering. Remove filters or increase max rows.")
+# If we already have results, just render them (don’t force rerun)
+if st.session_state["has_results"] and st.session_state["themes_df"] is not None and st.session_state["clustered_df"] is not None:
+    themes_df = st.session_state["themes_df"]
+    df_clustered = st.session_state["clustered_df"]
+else:
+    if not st.session_state["has_results"]:
+        st.info("Click “Generate insights” to run clustering + Groq labeling.")
         st.stop()
 
-    k_eff = min(k, n_samples)
-    if k_eff != k:
-        st.warning(f"Reducing number of themes from {k} to {k_eff} because only {n_samples} rows are available.")
+    # ---------- Debug checkpoints ----------
+    st.info("Step 1/3: Starting embedding + clustering...")
 
-    km = KMeans(n_clusters=k_eff, n_init="auto", random_state=42)
-    df["cluster"] = km.fit_predict(emb)
+    # ---------- Embedding + clustering ----------
+    st.info("Step 2/3: Embedding texts now (first run may download model)...")
+    with st.spinner("Embedding + clustering..."):
+        texts = df["text"].tolist()
+        emb = cached_embeddings(texts, file_hash, max_rows)
 
-model = st.secrets.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
-st.caption(f"Run settings: k={k_eff}, rows={len(df)}, model={model}")
+        n_samples = emb.shape[0]
+        if n_samples < 2:
+            st.error("Not enough rows to cluster after filtering. Remove filters or increase max rows.")
+            st.stop()
 
-# ---------- Theme scoring + labeling ----------
-st.info("Step 3/3: Starting Groq labeling...")
+        k_eff = min(k, n_samples)
+        if k_eff != k:
+            st.warning(f"Reducing number of themes from {k} to {k_eff} because only {n_samples} rows are available.")
 
-themes = []
-progress = st.progress(0)
-status = st.empty()
+        km = KMeans(n_clusters=k_eff, n_init="auto", random_state=42)
+        df = df.copy()
+        df["cluster"] = km.fit_predict(emb)
 
-clusters = sorted(df["cluster"].unique())
-total = len(clusters)
+    model = st.secrets.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
+    st.caption(f"Run settings: k={k_eff}, rows={len(df)}, model={model}")
 
-for idx, c in enumerate(clusters, start=1):
-    dfc = df[df["cluster"] == c].copy()
+    # ---------- Theme scoring + labeling ----------
+    st.info("Step 3/3: Starting Groq labeling...")
 
-    quotes = dfc["text"].head(5).tolist()
-    evidence = " | ".join([q[:140].replace("\\n", " ") for q in quotes])
+    themes = []
+    progress = st.progress(0)
+    status = st.empty()
 
-    count = int(len(dfc))
+    clusters = sorted(df["cluster"].unique())
+    total = len(clusters)
 
-    if "severity" in dfc.columns:
-        dfc["_severity_score"] = dfc["severity"].apply(severity_to_score)
-        avg_sev = float(np.nanmean(dfc["_severity_score"])) if dfc["_severity_score"].notna().any() else np.nan
-    else:
-        avg_sev = np.nan
+    for idx, c in enumerate(clusters, start=1):
+        dfc = df[df["cluster"] == c].copy()
 
-    if "plan" in dfc.columns:
-        dfc["_plan_weight"] = dfc["plan"].apply(plan_to_weight)
-        avg_plan_weight = float(np.nanmean(dfc["_plan_weight"])) if dfc["_plan_weight"].notna().any() else 1.0
-    else:
-        avg_plan_weight = 1.0
+        quotes = [q[:400] for q in dfc["text"].head(5).tolist()]
+        evidence = " | ".join([q[:140].replace("\\n", " ") for q in quotes])
 
-    sev_component = (avg_sev if not np.isnan(avg_sev) else 1.5)
-    priority_score = count * sev_component * avg_plan_weight
+        count = int(len(dfc))
 
-    prompt = f"""
+        if "severity" in dfc.columns:
+            dfc["_severity_score"] = dfc["severity"].apply(severity_to_score)
+            avg_sev = float(np.nanmean(dfc["_severity_score"])) if dfc["_severity_score"].notna().any() else np.nan
+        else:
+            avg_sev = np.nan
+
+        if "plan" in dfc.columns:
+            dfc["_plan_weight"] = dfc["plan"].apply(plan_to_weight)
+            avg_plan_weight = float(np.nanmean(dfc["_plan_weight"])) if dfc["_plan_weight"].notna().any() else 1.0
+        else:
+            avg_plan_weight = 1.0
+
+        sev_component = (avg_sev if not np.isnan(avg_sev) else 1.5)
+        priority_score = count * sev_component * avg_plan_weight
+
+        prompt = f"""
 You are a Product Manager analyzing customer feedback.
 
 Return ONLY a JSON object with exactly these keys:
@@ -293,73 +336,73 @@ Snippets:
 {json.dumps(quotes, ensure_ascii=False)}
 """.strip()
 
-    status.info(f"Calling Groq for theme {idx}/{total} (cluster {c})...")
+        status.info(f"Calling Groq for theme {idx}/{total} (cluster {c})...")
+        time.sleep(0.4)
 
-    time.sleep(0.4)
+        try:
+            model = st.secrets.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
+            obj = groq_generate_json(prompt, OUTPUT_SCHEMA, model)
+        except Exception as e:
+            st.error(f"Groq call failed for cluster {c}: {e}")
+            obj = {
+                "theme_name": f"Theme {c}",
+                "problem_summary": "Groq call failed. Theme label is a placeholder.",
+                "sentiment": "neutral",
+                "opportunity": "Opportunity: Retry with fewer rows/themes or increase timeout.",
+                "next_step": "Retry labeling after checking Groq / rate limits.",
+                "success_metric": "Activation rate",
+                "owner": "PM",
+                "confidence": "low",
+            }
 
-    try:
-        model = st.secrets.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
-        obj = groq_generate_json(prompt, OUTPUT_SCHEMA, model)
-    except Exception as e:
-        st.error(f"Groq call failed for cluster {c}: {e}")
-        obj = {
-            "theme_name": f"Theme {c}",
-            "problem_summary": "Groq call failed. Theme label is a placeholder.",
-            "sentiment": "neutral",
-            "opportunity": "Opportunity: Retry with fewer rows/themes or increase timeout.",
-            "next_step": "Retry labeling after checking Groq / rate limits.",
-            "success_metric": "Activation rate",
-            "owner": "PM",
-            "confidence": "low",
-        }
+        themes.append(
+            {
+                "cluster": int(c),
+                "count": count,
+                "avg_severity": avg_sev,
+                "avg_plan_weight": avg_plan_weight,
+                "priority_score": float(priority_score),
+                "theme_name": obj.get("theme_name"),
+                "problem_summary": obj.get("problem_summary"),
+                "sentiment": obj.get("sentiment"),
+                "opportunity": obj.get("opportunity"),
+                "next_step": obj.get("next_step"),
+                "success_metric": obj.get("success_metric"),
+                "owner": obj.get("owner"),
+                "confidence": obj.get("confidence"),
+                "evidence_quotes": evidence,
+            }
+        )
 
-    themes.append(
-        {
-            "cluster": int(c),
-            "count": count,
-            "avg_severity": avg_sev,
-            "avg_plan_weight": avg_plan_weight,
-            "priority_score": float(priority_score),
-            "theme_name": obj.get("theme_name"),
-            "problem_summary": obj.get("problem_summary"),
-            "sentiment": obj.get("sentiment"),
-            "opportunity": obj.get("opportunity"),
-            "next_step": obj.get("next_step"),
-            "success_metric": obj.get("success_metric"),
-            "owner": obj.get("owner"),
-            "confidence": obj.get("confidence"),
-            "evidence_quotes": evidence,
-        }
+        progress.progress(int(idx / total * 100))
+
+    status.success("Groq labeling complete.")
+
+    themes_df = (
+        pd.DataFrame(themes)
+        .sort_values("priority_score", ascending=False)
+        .reset_index(drop=True)
     )
 
-    progress.progress(int(idx / total * 100))
+    st.session_state["themes_df"] = themes_df
+    st.session_state["clustered_df"] = df
 
-status.success("Groq labeling complete.")
-
-themes_df = (
-    pd.DataFrame(themes)
-    .sort_values("priority_score", ascending=False)
-    .reset_index(drop=True)
-)
-st.session_state["themes_df"] = themes_df
-st.session_state["clustered_df"] = df
+    df_clustered = df
 
 # ---------- Outputs ----------
 st.subheader("Top 5 themes (by priority)")
-
 top5 = themes_df[
     ["theme_name", "priority_score", "count", "owner", "success_metric", "confidence", "opportunity"]
 ].head(5)
 top5_pretty = prettify_columns(top5)
-
 st.dataframe(
     top5_pretty,
     use_container_width=True,
-    column_config=make_column_config_for_themes(top5_pretty),
+    column_config=make_column_config(top5_pretty),
+    hide_index=True,
 )
 
 st.subheader("Themes (full)")
-
 full_cols = [
     "theme_name",
     "priority_score",
@@ -377,11 +420,11 @@ full_cols = [
 ]
 full_df = themes_df[full_cols]
 full_pretty = prettify_columns(full_df)
-
 st.dataframe(
     full_pretty,
     use_container_width=True,
-    column_config=make_column_config_for_themes(full_pretty),
+    column_config=make_column_config(full_pretty),
+    hide_index=True,
 )
 
 st.subheader("Inspect a theme (drill-down)")
@@ -389,25 +432,30 @@ choice = st.selectbox("Theme", themes_df["theme_name"].tolist())
 sel_cluster = int(themes_df.loc[themes_df["theme_name"] == choice, "cluster"].iloc[0])
 
 cols_to_show = [
-    c for c in ["feedback_id", "product", "date", "source", "persona", "plan", "severity", "text"] if c in df.columns
+    c for c in ["feedback_id", "product", "date", "source", "persona", "plan", "severity", "text"] if c in df_clustered.columns
 ]
 if not cols_to_show:
     cols_to_show = ["text"]
 
-st.dataframe(prettify_columns(df[df["cluster"] == sel_cluster][cols_to_show].head(50)), use_container_width=True)
+drill_df = df_clustered[df_clustered["cluster"] == sel_cluster][cols_to_show].head(50)
+drill_pretty = prettify_columns(drill_df)
+st.dataframe(
+    drill_pretty,
+    use_container_width=True,
+    column_config=make_column_config(drill_pretty),
+    hide_index=True,
+)
 
 st.download_button(
     "Download themes CSV",
-    data=df_to_csv_bytes(full_pretty),
+    data=df_to_csv_bytes(full_df),
     file_name="themes.csv",
     mime="text/csv",
 )
 
-df_out = df.copy()
 st.download_button(
     "Download clustered feedback CSV",
-    data=df_to_csv_bytes(df_out),
+    data=df_to_csv_bytes(df_clustered),
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
-

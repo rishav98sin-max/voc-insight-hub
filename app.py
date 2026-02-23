@@ -1,6 +1,8 @@
 import hashlib
 import io
 import json
+import time
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -9,196 +11,269 @@ import streamlit as st
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import KMeans
 
-GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
-DEFAULT_GROQ_MODEL = "llama-3.1-70b-versatile"
+# ----------------------------
+# Config
+# ----------------------------
+GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"  # Groq OpenAI-compatible endpoint [web:17]
+DEFAULT_EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
-OUTPUT_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "theme_name": {"type": "string"},
-        "problem_summary": {"type": "string"},
-        "sentiment": {"type": "string", "enum": ["positive", "neutral", "negative"]},
-        "opportunity": {"type": "string"},
-        "next_step": {"type": "string"},
-        "success_metric": {
-            "type": "string",
-            "enum": ["Activation rate", "Time-to-value", "Error rate", "Retention", "CSAT", "Support ticket rate"],
-        },
-        "owner": {"type": "string", "enum": ["PM", "Eng", "Design", "Support"]},
-        "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
-    },
-    "required": [
-        "theme_name",
-        "problem_summary",
-        "sentiment",
-        "opportunity",
-        "next_step",
-        "success_metric",
-        "owner",
-        "confidence",
-    ],
-    "additionalProperties": False,
-}
+st.set_page_config(page_title="VoC Theme Finder", layout="wide")
 
-st.set_page_config(page_title="VoC Insight Agent", layout="wide")
-st.title("VoC Insight Hub")
+# ----------------------------
+# Helpers
+# ----------------------------
+def _sha1_bytes(b: bytes) -> str:
+    return hashlib.sha1(b).hexdigest()
 
-
-@st.cache_resource
-def load_embedder():
-    return SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-
-
-def file_bytes_and_hash(uploaded_file):
-    uploaded_file.seek(0)
-    data = uploaded_file.getvalue()
-    if not data:
-        raise ValueError("Uploaded file is empty (0 bytes). Please re-upload.")
-    h = hashlib.sha256(data).hexdigest()
-    return data, h
-
-
-def read_uploaded_csv(uploaded_file) -> pd.DataFrame:
-    data, _ = file_bytes_and_hash(uploaded_file)
-    return pd.read_csv(io.BytesIO(data))
-
-
-@st.cache_data(show_spinner=False)
-def cached_embeddings(text_list: list[str], file_hash: str, max_rows: int) -> np.ndarray:
-    embedder = load_embedder()
-    emb = embedder.encode(text_list, show_progress_bar=False)
-    return np.array(emb)
-
-
-@st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
-def groq_generate_json(prompt: str, schema: dict, model: str) -> dict:
-    api_key = st.secrets["GROQ_API_KEY"]  # st.secrets is the supported way to read Streamlit secrets [web:723]
-
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": "Return ONLY valid JSON that matches the provided schema."},
-            {"role": "user", "content": prompt},
-        ],
-        "temperature": 0,
-        "response_format": {
-            "type": "json_schema",
-            "json_schema": {
-                "name": "voc_theme_schema",
-                "strict": False,  # best-effort mode (default); strict:true is only on specific models [web:709]
-                "schema": schema,
-            },
-        },
-    }
-
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-
-    r = requests.post(GROQ_CHAT_URL, headers=headers, json=payload, timeout=120)
-    r.raise_for_status()
-    data = r.json()
-
-    content = data["choices"][0]["message"]["content"]
-    return json.loads(content)
-
-
-@st.cache_data
 def df_to_csv_bytes(df: pd.DataFrame) -> bytes:
     return df.to_csv(index=False).encode("utf-8")
 
+@st.cache_resource(show_spinner=False)
+def load_embedder(model_name: str) -> SentenceTransformer:
+    # SentenceTransformer encode supports show_progress_bar param [web:36]
+    return SentenceTransformer(model_name)
 
-def severity_to_score(x):
-    if pd.isna(x):
-        return np.nan
-    s = str(x).strip().lower()
-    return {"low": 1, "medium": 2, "high": 3, "critical": 4}.get(s, np.nan)
+@st.cache_data(show_spinner=False)
+def embed_texts(texts: List[str], model_name: str) -> np.ndarray:
+    model = load_embedder(model_name)
+    emb = model.encode(
+        texts,
+        show_progress_bar=False,  # keep server logs clean; UI has its own status [web:36]
+        normalize_embeddings=True,
+    )
+    return np.asarray(emb, dtype=np.float32)
 
+def groq_chat(
+    api_key: str,
+    model: str,
+    messages: List[Dict[str, str]],
+    response_format: Dict[str, Any],
+    temperature: float = 0.2,
+    timeout_s: int = 60,
+) -> Dict[str, Any]:
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "response_format": response_format,  # structured outputs [web:17]
+    }
+    r = requests.post(GROQ_CHAT_URL, headers=headers, json=payload, timeout=timeout_s)
+    r.raise_for_status()
+    return r.json()
 
-def plan_to_weight(x):
-    if pd.isna(x):
-        return 1.0
-    s = str(x).strip().lower()
-    return {"free": 1.0, "pro": 1.5, "team": 2.0, "enterprise": 2.5}.get(s, 1.0)
+def groq_generate_theme_json(
+    api_key: str,
+    model: str,
+    cluster_examples: List[str],
+) -> Dict[str, Any]:
+    schema = {
+        "name": "theme_label",
+        "strict": False,  # best-effort mode; default is false [web:17]
+        "schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "theme": {"type": "string"},
+                "one_liner": {"type": "string"},
+                "why_it_matters": {"type": "string"},
+                "success_metric": {"type": "string"},
+                "owner": {"type": "string"},
+                "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
+            },
+            "required": [
+                "theme",
+                "one_liner",
+                "why_it_matters",
+                "success_metric",
+                "owner",
+                "confidence",
+            ],
+        },
+    }
 
+    examples = "\n".join([f"- {t}" for t in cluster_examples[:12]])
 
-# ---------- UI controls ----------
-uploaded = st.file_uploader("Upload feedback CSV (needs a 'text' column)", type=["csv"])
-k = st.slider("Number of themes", 2, 12, 8)
-max_rows = st.slider("Max rows to analyze (speed)", 50, 2000, 200)
+    system = (
+        "You are a product analyst. You will label a cluster of customer feedback items with a concise theme "
+        "and provide short, practical fields for a PM team. Output must be JSON only."
+    )
+    user = (
+        "Cluster examples:\n"
+        f"{examples}\n\n"
+        "Create a theme that captures the common issue/request.\n"
+        "Keep all fields short and business-friendly."
+    )
 
-if uploaded is None:
-    st.info("Upload sample_feedback.csv")
+    data = groq_chat(
+        api_key=api_key,
+        model=model,
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+        response_format={"type": "json_schema", "json_schema": schema},  # [web:17]
+        temperature=0.2,
+        timeout_s=90,
+    )
+
+    content = data["choices"][0]["message"]["content"]
+    # content should be JSON text; parse it
+    return json.loads(content)
+
+def safe_theme_fallback() -> Dict[str, Any]:
+    return {
+        "theme": "Unlabeled theme (fallback)",
+        "one_liner": "Could not label this cluster due to an API/format issue.",
+        "why_it_matters": "Manual review needed to avoid missing a recurring customer pain point.",
+        "success_metric": "Reduction in related complaints",
+        "owner": "PM",
+        "confidence": "low",
+    }
+
+# ----------------------------
+# UI
+# ----------------------------
+st.title("VoC Theme Finder")
+st.caption("Upload feedback → cluster similar items → label each cluster with Groq")
+
+with st.sidebar:
+    st.header("Settings")
+
+    groq_api_key = st.text_input("GROQ_API_KEY", type="password")
+    groq_model = st.text_input("Groq model", value="llama-3.1-8b-instant")
+
+    embed_model = st.text_input("Embedding model", value=DEFAULT_EMBED_MODEL)
+
+    k = st.slider("Number of themes (k)", min_value=2, max_value=12, value=5)
+    max_rows = st.slider("Max rows to process", min_value=50, max_value=1000, value=200, step=50)
+    throttle_s = st.slider("Throttle between Groq calls (seconds)", 0.0, 2.0, 0.5, 0.1)
+
+    st.divider()
+    st.write("Input format:")
+    st.code("CSV with a column named: feedback", language="text")
+
+uploaded = st.file_uploader("Upload CSV", type=["csv"])
+run = st.button("Generate insights", type="primary", use_container_width=True)
+
+if not uploaded:
+    st.info("Upload a CSV first (needs a `feedback` column).")
     st.stop()
 
-st.write("Uploaded file:", uploaded.name)
+file_bytes = uploaded.getvalue()
+file_sig = _sha1_bytes(file_bytes)
 
-try:
-    df_raw = read_uploaded_csv(uploaded)
-    _, file_hash = file_bytes_and_hash(uploaded)
-except Exception as e:
-    st.error(str(e))
+df = pd.read_csv(io.BytesIO(file_bytes))
+if "feedback" not in df.columns:
+    st.error("Your CSV must contain a column named `feedback`.")
     st.stop()
 
-if "text" not in df_raw.columns:
-    st.error("CSV must contain a 'text' column.")
-    st.stop()
+df = df.copy()
+df["feedback"] = df["feedback"].astype(str).fillna("").str.strip()
+df = df[df["feedback"].str.len() > 0].head(max_rows).reset_index(drop=True)
 
-df = df_raw.copy()
-with st.expander("Filters", expanded=True):
-    for col in ["product", "persona", "plan", "source", "severity"]:
-        if col in df.columns:
-            options = sorted([x for x in df[col].dropna().unique()])
-            chosen = st.multiselect(col.capitalize(), options)
-            if chosen:
-                df = df[df[col].isin(chosen)]
-
-df = df.dropna(subset=["text"]).copy()
-df["text"] = df["text"].astype(str)
-df = df.head(max_rows)
-
-if len(df) == 0:
-    st.warning("No rows left after filtering. Clear filters or upload more data.")
-    st.stop()
-
-st.subheader("Preview")
-st.dataframe(df.head(20), use_container_width=True)
-
-run = st.button("Generate insights")
+st.write(f"Rows loaded: {len(df)}")
 
 if not run:
-    if "themes_df" in st.session_state:
-        st.subheader("Last run (saved in session)")
-        st.dataframe(st.session_state["themes_df"], use_container_width=True)
     st.stop()
-    st.info("Step 1/3: Starting embedding + clustering...")
 
-# ---------- Embedding + clustering ----------
-st.info("Step 2/3: Embedding texts now (first run may download model)...")
-with st.spinner("Embedding + clustering..."):
-    texts = df["text"].tolist()
-    emb = cached_embeddings(texts, file_hash, max_rows)
+if not groq_api_key:
+    st.error("Please enter GROQ_API_KEY in the sidebar.")
+    st.stop()
 
-    n_samples = emb.shape[0]
-    if n_samples < 2:
-        st.error("Not enough rows to cluster after filtering. Remove filters or increase max rows.")
+# ----------------------------
+# Step 1/3: Embeddings + Clustering
+# ----------------------------
+st.info("Step 1/3: Starting embedding + clustering...")
+
+with st.spinner("Embedding feedback and clustering..."):
+    texts = df["feedback"].tolist()
+    X = embed_texts(texts, embed_model)
+
+    k_eff = min(k, len(df)) if len(df) > 0 else k
+    if k_eff < 2:
+        st.error("Need at least 2 rows to cluster.")
         st.stop()
 
-    k_eff = min(k, n_samples)
-    if k_eff != k:
-        st.warning(f"Reducing number of themes from {k} to {k_eff} because only {n_samples} rows are available.")
+    km = KMeans(n_clusters=k_eff, random_state=42, n_init="auto")
+    labels = km.fit_predict(X)
+    df["cluster"] = labels
 
-    km = KMeans(n_clusters=k_eff, n_init="auto", random_state=42)
-    df["cluster"] = km.fit_predict(emb)
+st.success("Step 1/3 complete: clustering done.")
+st.caption(f"Run settings: k={k_eff}, rows={len(df)}, embed_model={embed_model}, groq_model={groq_model}")
 
-model = st.secrets.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
-st.caption(f"Run settings: k={k_eff}, rows={len(df)}, model={model}")
+# ----------------------------
+# Step 2/3: Preview clusters
+# ----------------------------
+st.info("Step 2/3: Preview clusters")
 
-# ---------- Theme scoring + labeling ----------
+cluster_counts = df["cluster"].value_counts().sort_index()
+st.write("Cluster sizes:")
+st.dataframe(cluster_counts.rename("count").reset_index().rename(columns={"index": "cluster"}), use_container_width=True)
+
+with st.expander("Show sample rows per cluster"):
+    for c in sorted(df["cluster"].unique()):
+        st.markdown(f"### Cluster {c} ({int(cluster_counts.loc[c])} items)")
+        st.write(df[df["cluster"] == c]["feedback"].head(5).tolist())
+
+# ----------------------------
+# Step 3/3: Groq labeling
+# ----------------------------
 st.info("Step 3/3: Starting Groq labeling...")
-themes = []
-progress = st.progress(0)
 
+themes: List[Dict[str, Any]] = []
 clusters = sorted(df["cluster"].unique())
 
+status = st.empty()
+progress = st.progress(0, text="Preparing to label clusters...")  # progress bar API [web:32]
+
+for i, c in enumerate(clusters, start=1):
+    status.info(f"Labeling theme {i}/{len(clusters)} (cluster {c})...")
+    progress.progress(int((i - 1) / max(1, len(clusters)) * 100), text=f"Labeling {i}/{len(clusters)}...")  # [web:32]
+
+    cluster_texts = df[df["cluster"] == c]["feedback"].tolist()
+
+    try:
+        obj = groq_generate_theme_json(
+            api_key=groq_api_key,
+            model=groq_model,
+            cluster_examples=cluster_texts,
+        )
+    except Exception as e:
+        st.error(f"Groq labeling failed for cluster {c}: {e}")
+        obj = safe_theme_fallback()
+
+    obj["cluster"] = int(c)
+    obj["n_items"] = int(len(cluster_texts))
+    themes.append(obj)
+
+    if throttle_s and throttle_s > 0:
+        time.sleep(float(throttle_s))
+
+progress.progress(100, text="Done labeling.")
+status.success("All clusters labeled.")
+
+themes_df = pd.DataFrame(themes).sort_values("cluster").reset_index(drop=True)
+
+st.subheader("Themes")
+st.dataframe(themes_df, use_container_width=True)
+
+# Join themes back to rows
+df_out = df.merge(themes_df[["cluster", "theme"]], on="cluster", how="left")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.download_button(
+        "Download themes.csv",
+        data=df_to_csv_bytes(themes_df),
+        file_name="themes.csv",
+        mime="text/csv",
+        use_container_width=True,
+    )
+
+with col2:
+    st.download_button(
+        "Download clustered_feedback.csv",
+        data=df_to_csv_bytes(df_out),
+        file_name="clustered_feedback.csv",
+        mime="text/csv",
+        use_container_width=True,
+    )

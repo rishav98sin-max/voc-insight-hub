@@ -172,8 +172,10 @@ if not run:
         st.subheader("Last run (saved in session)")
         st.dataframe(st.session_state["themes_df"], use_container_width=True)
     st.stop()
+    st.info("Step 1/3: Starting embedding + clustering...")
 
 # ---------- Embedding + clustering ----------
+st.info("Step 2/3: Embedding texts now (first run may download model)...")
 with st.spinner("Embedding + clustering..."):
     texts = df["text"].tolist()
     emb = cached_embeddings(texts, file_hash, max_rows)
@@ -194,7 +196,9 @@ model = st.secrets.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
 st.caption(f"Run settings: k={k_eff}, rows={len(df)}, model={model}")
 
 # ---------- Theme scoring + labeling ----------
+st.info("Step 3/3: Starting Groq labeling...")
 themes = []
 progress = st.progress(0)
 
 clusters = sorted(df["cluster"].unique())
+

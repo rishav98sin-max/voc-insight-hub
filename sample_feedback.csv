@@ -1,0 +1,141 @@
+feedback_id,product,date,source,persona,plan,severity,text,hidden_theme
+FB-0001,ProjectFlow,2026-01-14,Support ticket,Founder,Team,Medium,Not sure if bug but Need Google Calendar 2-way sync. Any workaround?,Integrations
+FB-0002,ProjectFlow,2026-01-18,Sales call note,PM,Free,Low,Too many email notifications—hard to tune. Please fix asap.,Notifications overload
+FB-0003,ProjectFlow,2025-12-24,In-app feedback,Ops,Free,Medium,I can’t change a user from Viewer to Editor. This is blocking us.,Invites & permissions
+FB-0004,ProjectFlow,2025-12-28,In-app feedback,PM,Team,High,I was charged but the plan didn’t upgrade. This is blocking us.,Billing & pricing
+FB-0005,ProjectFlow,2026-01-18,Sales call note,Founder,Free,High,Jira integration keeps disconnecting. This is blocking us.,Integrations
+FB-0006,ProjectFlow,2025-12-27,In-app feedback,Developer,Pro,Medium,"FYI, Where do I start after signing up?",Onboarding confusion
+FB-0007,ProjectFlow,2026-01-17,Sales call note,Ops,Free,Low,Suggestion: Where do I start after signing up?,Onboarding confusion
+FB-0008,ProjectFlow,2026-01-27,Sales call note,Founder,Pro,Medium,Suggestion: Need Google Calendar 2-way sync. Please fix asap.,Integrations
+FB-0009,ProjectFlow,2026-02-13,Support ticket,PM,Team,Medium,Quick question: Webhook support for task updates is missing. This is blocking us.,Integrations
+FB-0010,ProjectFlow,2026-01-09,App review,Ops,Pro,High,"FYI, Inviting teammates fails with 'unknown error'. Any workaround?",Invites & permissions
+FB-0011,ProjectFlow,2026-01-04,Support ticket,Founder,Free,Medium,Suggestion: Jira integration keeps disconnecting.,Integrations
+FB-0012,ProjectFlow,2026-01-19,In-app feedback,Sales,Pro,Low,Not sure if bug but Search is slow and sometimes times out. Please fix asap.,Performance / slowness
+FB-0013,ProjectFlow,2026-02-03,NPS comment,Ops,Pro,High,Not sure if bug but Basic burndown chart would be useful. Thanks!,Reporting / export
+FB-0014,ProjectFlow,2026-01-22,Support ticket,Founder,Pro,High,I need Slack notifications only for @mentions.,Notifications overload
+FB-0015,ProjectFlow,2026-01-27,Sales call note,Founder,Pro,Low,"FYI, App feels laggy on mobile web.",Performance / slowness
+FB-0016,ProjectFlow,2026-01-16,Sales call note,Developer,Team,Low,Gantt view freezes with many tasks. Please fix asap.,Performance / slowness
+FB-0017,ProjectFlow,2026-01-19,In-app feedback,PM,Free,Low,Suggestion: Where do I download invoices? Any workaround?,Billing & pricing
+FB-0018,ProjectFlow,2026-02-20,Support ticket,Founder,Free,Low,Integrations page is confusing to set up.,Integrations
+FB-0019,ProjectFlow,2026-01-29,NPS comment,PM,Pro,Medium,"Honestly, SSO keeps looping me back to the login screen. This is blocking us.",Login / SSO issues
+FB-0020,ProjectFlow,2026-02-07,NPS comment,PM,Free,Low,Suggestion: Template gallery is hard to discover. Please fix asap.,Onboarding confusion
+FB-0021,ProjectFlow,2026-02-04,In-app feedback,Sales,Pro,Medium,Gantt view freezes with many tasks.,Performance / slowness
+FB-0022,ProjectFlow,2026-01-24,NPS comment,Developer,Pro,Low,"FYI, Can’t sign in with Google—button just spins. Any workaround?",Login / SSO issues
+FB-0023,ProjectFlow,2026-01-30,In-app feedback,Ops,Pro,High,"Honestly, App feels laggy on mobile web. This is blocking us.",Performance / slowness
+FB-0024,ProjectFlow,2026-01-13,App review,Developer,Free,Medium,Not sure if bug but I need Slack notifications only for @mentions. Any workaround?,Notifications overload
+FB-0025,ProjectFlow,2026-01-19,NPS comment,Founder,Pro,High,Suggestion: 2FA codes are rejected even though they’re correct.,Login / SSO issues
+FB-0026,ProjectFlow,2026-01-04,NPS comment,Founder,Pro,Low,Webhook support for task updates is missing.,Integrations
+FB-0027,ProjectFlow,2026-02-18,Support ticket,Ops,Team,Low,Quick question: I keep getting logged out every few minutes. Thanks!,Login / SSO issues
+FB-0028,ProjectFlow,2026-01-20,App review,Developer,Free,Low,Notifications are delayed by hours sometimes. Please fix asap.,Notifications overload
+FB-0029,ProjectFlow,2026-02-11,App review,Founder,Pro,Medium,I can’t change a user from Viewer to Editor.,Invites & permissions
+FB-0030,ProjectFlow,2026-01-24,Support ticket,Ops,Free,Medium,Where do I start after signing up? This is blocking us.,Onboarding confusion
+FB-0031,ProjectFlow,2026-01-11,Sales call note,PM,Pro,Low,I need Slack notifications only for @mentions.,Notifications overload
+FB-0032,ProjectFlow,2026-02-12,Sales call note,PM,Pro,High,I was charged but the plan didn’t upgrade. Any workaround?,Billing & pricing
+FB-0033,ProjectFlow,2026-02-09,App review,Founder,Pro,Medium,Can I pay annually with a discount? This is blocking us.,Billing & pricing
+FB-0034,ProjectFlow,2026-01-11,Support ticket,Ops,Free,Medium,Search is slow and sometimes times out. Please fix asap.,Performance / slowness
+FB-0035,ProjectFlow,2026-01-23,Support ticket,Founder,Free,Low,I don’t understand the difference between Workspace and Project.,Onboarding confusion
+FB-0036,ProjectFlow,2026-01-03,Sales call note,Ops,Pro,Medium,Suggestion: SSO keeps looping me back to the login screen.,Login / SSO issues
+FB-0037,ProjectFlow,2026-02-19,NPS comment,Sales,Pro,High,Suggestion: Sample data would help me learn faster. This is blocking us.,Onboarding confusion
+FB-0038,ProjectFlow,2026-01-18,In-app feedback,PM,Free,Low,Not sure if bug but The app needs a guided setup checklist.,Onboarding confusion
+FB-0039,ProjectFlow,2026-02-16,NPS comment,Ops,Free,Low,Need export to CSV for tasks and due dates. Any workaround?,Reporting / export
+FB-0040,ProjectFlow,2026-01-01,In-app feedback,Developer,Free,Medium,The app needs a guided setup checklist. Please fix asap.,Onboarding confusion
+FB-0041,ProjectFlow,2025-12-23,NPS comment,PM,Free,Low,Not sure if bug but Need prorated billing when adding seats mid-month.,Billing & pricing
+FB-0042,ProjectFlow,2025-12-26,Sales call note,PM,Pro,Low,Template gallery is hard to discover. Please fix asap.,Onboarding confusion
+FB-0043,ProjectFlow,2026-01-08,In-app feedback,PM,Team,Medium,Too many email notifications—hard to tune.,Notifications overload
+FB-0044,ProjectFlow,2026-02-04,App review,Ops,Pro,Low,Not sure if bug but Need prorated billing when adding seats mid-month.,Billing & pricing
+FB-0045,ProjectFlow,2026-01-31,Support ticket,Developer,Free,Low,Need export to CSV for tasks and due dates. Please fix asap.,Reporting / export
+FB-0046,ProjectFlow,2026-01-12,Support ticket,PM,Free,High,"Honestly, Need export to CSV for tasks and due dates.",Reporting / export
+FB-0047,ProjectFlow,2026-01-01,Support ticket,Ops,Free,Low,Need prorated billing when adding seats mid-month.,Billing & pricing
+FB-0048,ProjectFlow,2026-01-19,NPS comment,PM,Pro,Medium,"FYI, Search is slow and sometimes times out. Any workaround?",Performance / slowness
+FB-0049,ProjectFlow,2025-12-23,Support ticket,Founder,Free,Medium,Quick question: App feels laggy on mobile web. Thanks!,Performance / slowness
+FB-0050,ProjectFlow,2026-02-02,App review,Sales,Free,Low,Suggestion: I want per-project notification settings.,Notifications overload
+FB-0051,ProjectFlow,2026-02-13,In-app feedback,PM,Free,High,"FYI, Can I pay annually with a discount? Any workaround?",Billing & pricing
+FB-0052,ProjectFlow,2026-01-18,NPS comment,Developer,Free,Low,Quick question: Switching between projects is noticeably slow.,Performance / slowness
+FB-0053,ProjectFlow,2026-01-02,App review,PM,Free,High,"FYI, Need role-based access for clients vs internal staff. This is blocking us.",Invites & permissions
+FB-0054,ProjectFlow,2026-01-04,NPS comment,PM,Free,Medium,Quick question: Can I schedule a weekly report to email? This is blocking us.,Reporting / export
+FB-0055,ProjectFlow,2026-02-09,Sales call note,Ops,Free,Low,Suggestion: Where do I download invoices?,Billing & pricing
+FB-0056,ProjectFlow,2026-01-10,NPS comment,Ops,Free,Medium,Need export to CSV for tasks and due dates. Please fix asap.,Reporting / export
+FB-0057,ProjectFlow,2026-01-15,Sales call note,Developer,Team,Medium,Audit log for permission changes would help. Any workaround?,Invites & permissions
+FB-0058,ProjectFlow,2026-01-31,Sales call note,Ops,Free,Low,"FYI, The app needs a guided setup checklist. Any workaround?",Onboarding confusion
+FB-0059,ProjectFlow,2025-12-27,In-app feedback,Ops,Team,Low,Gantt view freezes with many tasks. Thanks!,Performance / slowness
+FB-0060,ProjectFlow,2026-01-31,Support ticket,Developer,Pro,Medium,App feels laggy on mobile web. Please fix asap.,Performance / slowness
+FB-0061,ProjectFlow,2026-02-17,Sales call note,PM,Free,Medium,"FYI, Notifications are delayed by hours sometimes.",Notifications overload
+FB-0062,ProjectFlow,2026-01-05,In-app feedback,Founder,Free,Medium,"FYI, Need role-based access for clients vs internal staff. Thanks!",Invites & permissions
+FB-0063,ProjectFlow,2026-01-30,Support ticket,PM,Pro,Medium,Not sure if bug but Template gallery is hard to discover.,Onboarding confusion
+FB-0064,ProjectFlow,2026-01-30,NPS comment,PM,Pro,Medium,Too many email notifications—hard to tune.,Notifications overload
+FB-0065,ProjectFlow,2026-02-03,In-app feedback,PM,Pro,Low,I keep getting logged out every few minutes. Please fix asap.,Login / SSO issues
+FB-0066,ProjectFlow,2026-01-03,Sales call note,Developer,Team,Low,Suggestion: Reporting is too limited for stakeholders. Please fix asap.,Reporting / export
+FB-0067,ProjectFlow,2026-01-08,App review,PM,Team,Low,Need role-based access for clients vs internal staff.,Invites & permissions
+FB-0068,ProjectFlow,2025-12-30,NPS comment,Developer,Free,Medium,Too many email notifications—hard to tune.,Notifications overload
+FB-0069,ProjectFlow,2025-12-23,App review,PM,Team,Low,Quick question: Need export to CSV for tasks and due dates.,Reporting / export
+FB-0070,ProjectFlow,2026-01-11,App review,Developer,Free,Low,Not sure if bug but Template gallery is hard to discover.,Onboarding confusion
+FB-0071,ProjectFlow,2026-02-05,In-app feedback,PM,Free,Low,Quick question: Jira integration keeps disconnecting. Thanks!,Integrations
+FB-0072,ProjectFlow,2025-12-26,Sales call note,PM,Team,Low,Quick question: Can I schedule a weekly report to email?,Reporting / export
+FB-0073,ProjectFlow,2026-01-31,NPS comment,Founder,Team,High,Need prorated billing when adding seats mid-month.,Billing & pricing
+FB-0074,ProjectFlow,2026-02-16,App review,PM,Pro,High,Not sure if bug but Digest email would be better than individual pings. This is blocking us.,Notifications overload
+FB-0075,ProjectFlow,2026-01-19,App review,Founder,Team,Medium,"Honestly, Can I pay annually with a discount? Any workaround?",Billing & pricing
+FB-0076,ProjectFlow,2026-01-21,In-app feedback,Sales,Pro,Low,Suggestion: App feels laggy on mobile web.,Performance / slowness
+FB-0077,ProjectFlow,2026-02-01,App review,Developer,Pro,Low,"FYI, Can I schedule a weekly report to email? Any workaround?",Reporting / export
+FB-0078,ProjectFlow,2026-01-23,In-app feedback,Founder,Free,High,Not sure if bug but Sample data would help me learn faster.,Onboarding confusion
+FB-0079,ProjectFlow,2026-01-18,App review,Sales,Team,Low,"Honestly, Sample data would help me learn faster. Please fix asap.",Onboarding confusion
+FB-0080,ProjectFlow,2026-01-14,In-app feedback,PM,Free,Low,I need Slack notifications only for @mentions.,Notifications overload
+FB-0081,ProjectFlow,2026-01-08,App review,PM,Pro,Low,Not sure if bug but Too many email notifications—hard to tune. Please fix asap.,Notifications overload
+FB-0082,ProjectFlow,2026-01-24,Sales call note,Sales,Free,High,"FYI, I keep getting logged out every few minutes. This is blocking us.",Login / SSO issues
+FB-0083,ProjectFlow,2026-01-10,App review,PM,Pro,High,"FYI, Too many email notifications—hard to tune.",Notifications overload
+FB-0084,ProjectFlow,2026-01-28,App review,Developer,Team,Low,Magic link never arrives to my email. Please fix asap.,Login / SSO issues
+FB-0085,ProjectFlow,2025-12-31,In-app feedback,PM,Free,Medium,Suggestion: Need role-based access for clients vs internal staff. Please fix asap.,Invites & permissions
+FB-0086,ProjectFlow,2026-01-05,In-app feedback,Developer,Free,Medium,Need role-based access for clients vs internal staff. This is blocking us.,Invites & permissions
+FB-0087,ProjectFlow,2025-12-28,Support ticket,Ops,Pro,High,"FYI, Basic burndown chart would be useful. This is blocking us.",Reporting / export
+FB-0088,ProjectFlow,2026-01-10,Sales call note,Developer,Free,High,"FYI, Notifications are delayed by hours sometimes.",Notifications overload
+FB-0089,ProjectFlow,2026-01-17,Support ticket,Ops,Pro,Medium,"Honestly, Can I schedule a weekly report to email? Please fix asap.",Reporting / export
+FB-0090,ProjectFlow,2025-12-27,App review,PM,Pro,Low,Need export to CSV for tasks and due dates.,Reporting / export
+FB-0091,ProjectFlow,2026-01-14,App review,Founder,Free,Medium,"Honestly, Need prorated billing when adding seats mid-month. Please fix asap.",Billing & pricing
+FB-0092,ProjectFlow,2026-01-03,App review,Developer,Free,Low,"FYI, Too many email notifications—hard to tune. Any workaround?",Notifications overload
+FB-0093,ProjectFlow,2026-02-20,Support ticket,PM,Team,Medium,Suggestion: I need Slack notifications only for @mentions.,Notifications overload
+FB-0094,ProjectFlow,2025-12-31,Sales call note,Sales,Free,High,Suggestion: Search is slow and sometimes times out. Please fix asap.,Performance / slowness
+FB-0095,ProjectFlow,2026-01-02,Support ticket,Founder,Free,High,Magic link never arrives to my email. This is blocking us.,Login / SSO issues
+FB-0096,ProjectFlow,2026-02-07,Sales call note,PM,Free,Low,Jira integration keeps disconnecting.,Integrations
+FB-0097,ProjectFlow,2026-01-08,Support ticket,PM,Free,Low,Quick question: Reporting is too limited for stakeholders.,Reporting / export
+FB-0098,ProjectFlow,2025-12-27,App review,PM,Team,Low,"Honestly, Where do I download invoices? Please fix asap.",Billing & pricing
+FB-0099,ProjectFlow,2026-02-07,NPS comment,Sales,Free,Medium,Quick question: The app needs a guided setup checklist. This is blocking us.,Onboarding confusion
+FB-0100,ProjectFlow,2026-01-07,Support ticket,PM,Pro,Low,Not sure if bug but I was charged but the plan didn’t upgrade.,Billing & pricing
+FB-0101,ProjectFlow,2025-12-24,Sales call note,PM,Team,Low,Quick question: Audit log for permission changes would help.,Invites & permissions
+FB-0102,ProjectFlow,2025-12-23,Support ticket,Developer,Pro,High,"FYI, Webhook support for task updates is missing.",Integrations
+FB-0103,ProjectFlow,2026-02-12,App review,PM,Free,Low,Suggestion: Need role-based access for clients vs internal staff. Thanks!,Invites & permissions
+FB-0104,ProjectFlow,2026-01-29,In-app feedback,Sales,Free,Low,The app needs a guided setup checklist. Thanks!,Onboarding confusion
+FB-0105,ProjectFlow,2026-01-16,In-app feedback,Developer,Free,Medium,Quick question: Zapier triggers are incomplete. Thanks!,Integrations
+FB-0106,ProjectFlow,2026-01-01,NPS comment,Founder,Pro,High,Notifications are delayed by hours sometimes. Any workaround?,Notifications overload
+FB-0107,ProjectFlow,2026-02-05,App review,Founder,Free,Medium,"FYI, Inviting teammates fails with 'unknown error'. This is blocking us.",Invites & permissions
+FB-0108,ProjectFlow,2026-02-14,Sales call note,Developer,Free,High,Suggestion: Switching between projects is noticeably slow. This is blocking us.,Performance / slowness
+FB-0109,ProjectFlow,2026-01-03,NPS comment,PM,Free,Medium,"FYI, Can I schedule a weekly report to email? This is blocking us.",Reporting / export
+FB-0110,ProjectFlow,2026-01-06,NPS comment,Founder,Free,Medium,"FYI, I need Slack notifications only for @mentions. This is blocking us.",Notifications overload
+FB-0111,ProjectFlow,2026-02-13,In-app feedback,Founder,Team,Low,Need role-based access for clients vs internal staff.,Invites & permissions
+FB-0112,ProjectFlow,2026-01-03,Sales call note,Founder,Free,High,"FYI, Jira integration keeps disconnecting.",Integrations
+FB-0113,ProjectFlow,2025-12-28,Support ticket,Ops,Pro,Medium,Integrations page is confusing to set up. Please fix asap.,Integrations
+FB-0114,ProjectFlow,2025-12-24,NPS comment,PM,Free,Medium,Need Google Calendar 2-way sync.,Integrations
+FB-0115,ProjectFlow,2025-12-26,NPS comment,Ops,Free,Low,Quick question: Too many email notifications—hard to tune. Please fix asap.,Notifications overload
+FB-0116,ProjectFlow,2025-12-31,Sales call note,PM,Team,Medium,Suggestion: Sample data would help me learn faster.,Onboarding confusion
+FB-0117,ProjectFlow,2026-01-17,NPS comment,PM,Team,High,Not sure if bug but I can’t change a user from Viewer to Editor. Any workaround?,Invites & permissions
+FB-0118,ProjectFlow,2026-02-01,NPS comment,PM,Team,Low,Quick question: Need time-tracking summary by assignee. Please fix asap.,Reporting / export
+FB-0119,ProjectFlow,2026-01-16,Support ticket,Sales,Free,Medium,I was charged but the plan didn’t upgrade. Please fix asap.,Billing & pricing
+FB-0120,ProjectFlow,2025-12-27,App review,Founder,Pro,Medium,Zapier triggers are incomplete.,Integrations
+FB-0121,ProjectFlow,2026-02-19,In-app feedback,PM,Free,Low,Integrations page is confusing to set up.,Integrations
+FB-0122,ProjectFlow,2026-01-11,App review,Founder,Team,Low,"Honestly, Cancel flow is hard to find.",Billing & pricing
+FB-0123,ProjectFlow,2026-01-30,App review,Developer,Free,High,Where do I download invoices? Any workaround?,Billing & pricing
+FB-0124,ProjectFlow,2026-01-13,App review,PM,Pro,Low,"Honestly, The app needs a guided setup checklist.",Onboarding confusion
+FB-0125,ProjectFlow,2025-12-29,NPS comment,Developer,Pro,High,I need Slack notifications only for @mentions. This is blocking us.,Notifications overload
+FB-0126,ProjectFlow,2026-01-19,NPS comment,PM,Free,Medium,"FYI, Reporting is too limited for stakeholders. This is blocking us.",Reporting / export
+FB-0127,ProjectFlow,2026-02-13,App review,PM,Pro,Low,Suggestion: Can’t sign in with Google—button just spins. Please fix asap.,Login / SSO issues
+FB-0128,ProjectFlow,2026-02-11,Support ticket,Founder,Free,Low,Template gallery is hard to discover.,Onboarding confusion
+FB-0129,ProjectFlow,2025-12-27,Sales call note,Sales,Free,Low,SSO keeps looping me back to the login screen.,Login / SSO issues
+FB-0130,ProjectFlow,2026-01-03,Support ticket,Founder,Pro,Low,I was charged but the plan didn’t upgrade. Thanks!,Billing & pricing
+FB-0131,ProjectFlow,2026-02-13,Support ticket,Developer,Team,Low,Where do I start after signing up? Any workaround?,Onboarding confusion
+FB-0132,ProjectFlow,2026-01-07,In-app feedback,PM,Team,High,Quick question: Basic burndown chart would be useful. This is blocking us.,Reporting / export
+FB-0133,ProjectFlow,2026-01-03,Support ticket,Ops,Free,Medium,"FYI, I want per-project notification settings. This is blocking us.",Notifications overload
+FB-0134,ProjectFlow,2025-12-25,Sales call note,Developer,Free,Medium,Not sure if bug but Can I schedule a weekly report to email?,Reporting / export
+FB-0135,ProjectFlow,2026-02-07,App review,Sales,Pro,Medium,Zapier triggers are incomplete.,Integrations
+FB-0136,ProjectFlow,2026-01-19,Support ticket,Founder,Free,High,Quick question: Reporting is too limited for stakeholders. This is blocking us.,Reporting / export
+FB-0137,ProjectFlow,2026-02-19,Sales call note,Ops,Team,Medium,"FYI, 2FA codes are rejected even though they’re correct.",Login / SSO issues
+FB-0138,ProjectFlow,2026-01-17,App review,Founder,Pro,Medium,Jira integration keeps disconnecting.,Integrations
+FB-0139,ProjectFlow,2025-12-22,Support ticket,Ops,Free,Medium,Suggestion: Magic link never arrives to my email.,Login / SSO issues
+FB-0140,ProjectFlow,2025-12-30,Sales call note,PM,Pro,High,Quick question: Need export to CSV for tasks and due dates. This is blocking us.,Reporting / export

@@ -250,7 +250,7 @@ Snippets:
         try:
             model = st.secrets.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
             obj = groq_generate_json(prompt, OUTPUT_SCHEMA, model)
-        xcept Exception as e:
+        except Exception as e:
     st.error(f"Groq call failed for cluster {c}: {e}")
     obj = {
         "theme_name": f"Theme {c}",
@@ -329,5 +329,6 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
+
 
 

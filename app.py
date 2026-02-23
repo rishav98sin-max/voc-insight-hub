@@ -11,7 +11,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.cluster import KMeans
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
-DEFAULT_GROQ_MODEL = "llama-3.1-70b-versatile"
+DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 
 OUTPUT_SCHEMA = {
     "type": "object",
@@ -365,6 +365,7 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
+
 
 
 

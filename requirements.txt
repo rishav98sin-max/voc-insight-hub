@@ -4,3 +4,6 @@ numpy
 scikit-learn
 sentence-transformers
 requests
+python-pptx
+
+

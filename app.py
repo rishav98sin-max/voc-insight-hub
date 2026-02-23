@@ -74,7 +74,7 @@ def cached_embeddings(text_list: list[str], file_hash: str, max_rows: int) -> np
 
 @st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
 def groq_generate_json(prompt: str, schema: dict, model: str) -> dict:
-    api_key = st.secrets["GROQ_API_KEY"]  # Streamlit secrets [web:723]
+    api_key = st.secrets["GROQ_API_KEY"]
 
     payload = {
         "model": model,
@@ -84,7 +84,6 @@ def groq_generate_json(prompt: str, schema: dict, model: str) -> dict:
         ],
         "temperature": 0,
         "response_format": {"type": "json_object"},
-
     }
 
     headers = {
@@ -94,11 +93,8 @@ def groq_generate_json(prompt: str, schema: dict, model: str) -> dict:
 
     r = requests.post(GROQ_CHAT_URL, headers=headers, json=payload, timeout=120)
     if not r.ok:
-        # This prints Groq's real error message (why it's 400)
         raise RuntimeError(f"Groq HTTP {r.status_code}: {r.text}")
     data = r.json()
-    
-    
 
     content = data["choices"][0]["message"]["content"]
     return json.loads(content)
@@ -123,10 +119,46 @@ def plan_to_weight(x):
     return {"free": 1.0, "pro": 1.5, "team": 2.0, "enterprise": 2.5}.get(s, 1.0)
 
 
+def prettify_columns(df_in: pd.DataFrame) -> pd.DataFrame:
+    df2 = df_in.copy()
+    df2.columns = [c.replace("_", " ").strip().title() for c in df2.columns]
+    return df2
+
+
+def make_column_config_for_themes(pretty_df: pd.DataFrame) -> dict:
+    # Use column_config to control header labels + widths [web:127][web:128]
+    cfg = {}
+    cols = list(pretty_df.columns)
+
+    def col(name: str, label: str, width: str):
+        if name in cols:
+            cfg[name] = st.column_config.Column(label=label, width=width)
+
+    # Narrow-ish columns
+    col("Theme Name", "Theme Name", "medium")
+    col("Priority Score", "Priority Score", "small")
+    col("Count", "Count", "small")
+    col("Owner", "Owner", "small")
+    col("Success Metric", "Success Metric", "medium")
+    col("Confidence", "Confidence", "small")
+    col("Sentiment", "Sentiment", "small")
+    col("Cluster", "Cluster", "small")
+
+    # Wide columns (text-heavy)
+    col("Problem Summary", "Problem Summary", "large")
+    col("Opportunity", "Opportunity", "large")
+    col("Next Step", "Next Step", "large")
+    col("Evidence Quotes", "Evidence Quotes", "large")
+
+    col("Avg Severity", "Avg Severity", "small")
+    col("Avg Plan Weight", "Avg Plan Weight", "small")
+
+    return cfg
+
+
 # ---------- UI controls ----------
 uploaded = st.file_uploader("Upload feedback CSV (needs a 'text' column)", type=["csv"])
 
-# Use lower defaults so the demo finishes fast on Streamlit Cloud
 k = st.slider("Number of themes", 2, 12, 8)
 max_rows = st.slider("Max rows to analyze (speed)", 50, 2000, 200)
 
@@ -149,12 +181,12 @@ if "text" not in df_raw.columns:
 
 df = df_raw.copy()
 with st.expander("Filters", expanded=True):
-    for col in ["product", "persona", "plan", "source", "severity"]:
-        if col in df.columns:
-            options = sorted([x for x in df[col].dropna().unique()])
-            chosen = st.multiselect(col.capitalize(), options)
+    for colname in ["product", "persona", "plan", "source", "severity"]:
+        if colname in df.columns:
+            options = sorted([x for x in df[colname].dropna().unique()])
+            chosen = st.multiselect(colname.capitalize(), options)
             if chosen:
-                df = df[df[col].isin(chosen)]
+                df = df[df[colname].isin(chosen)]
 
 df = df.dropna(subset=["text"]).copy()
 df["text"] = df["text"].astype(str)
@@ -165,14 +197,19 @@ if len(df) == 0:
     st.stop()
 
 st.subheader("Preview")
-st.dataframe(df.head(20), use_container_width=True)
+st.dataframe(prettify_columns(df.head(20)), use_container_width=True)
 
 run = st.button("Generate insights")
 
 if not run:
     if "themes_df" in st.session_state:
         st.subheader("Last run (saved in session)")
-        st.dataframe(st.session_state["themes_df"], use_container_width=True)
+        last_pretty = prettify_columns(st.session_state["themes_df"])
+        st.dataframe(
+            last_pretty,
+            use_container_width=True,
+            column_config=make_column_config_for_themes(last_pretty),
+        )
     st.stop()
 
 # ---------- Debug checkpoints ----------
@@ -204,7 +241,7 @@ st.info("Step 3/3: Starting Groq labeling...")
 
 themes = []
 progress = st.progress(0)
-status = st.empty()  # live status line [web:860]
+status = st.empty()
 
 clusters = sorted(df["cluster"].unique())
 total = len(clusters)
@@ -258,7 +295,6 @@ Snippets:
 
     status.info(f"Calling Groq for theme {idx}/{total} (cluster {c})...")
 
-    # Throttle to avoid bursty calls on free-tier limits
     time.sleep(0.4)
 
     try:
@@ -307,30 +343,42 @@ st.session_state["clustered_df"] = df
 
 # ---------- Outputs ----------
 st.subheader("Top 5 themes (by priority)")
-st.table(
-    themes_df[["theme_name", "priority_score", "count", "owner", "success_metric", "confidence", "opportunity"]].head(5)
+
+top5 = themes_df[
+    ["theme_name", "priority_score", "count", "owner", "success_metric", "confidence", "opportunity"]
+].head(5)
+top5_pretty = prettify_columns(top5)
+
+st.dataframe(
+    top5_pretty,
+    use_container_width=True,
+    column_config=make_column_config_for_themes(top5_pretty),
 )
 
 st.subheader("Themes (full)")
+
+full_cols = [
+    "theme_name",
+    "priority_score",
+    "count",
+    "owner",
+    "success_metric",
+    "confidence",
+    "sentiment",
+    "problem_summary",
+    "opportunity",
+    "next_step",
+    "avg_severity",
+    "avg_plan_weight",
+    "evidence_quotes",
+]
+full_df = themes_df[full_cols]
+full_pretty = prettify_columns(full_df)
+
 st.dataframe(
-    themes_df[
-        [
-            "theme_name",
-            "priority_score",
-            "count",
-            "owner",
-            "success_metric",
-            "confidence",
-            "sentiment",
-            "problem_summary",
-            "opportunity",
-            "next_step",
-            "avg_severity",
-            "avg_plan_weight",
-            "evidence_quotes",
-        ]
-    ],
+    full_pretty,
     use_container_width=True,
+    column_config=make_column_config_for_themes(full_pretty),
 )
 
 st.subheader("Inspect a theme (drill-down)")
@@ -343,11 +391,11 @@ cols_to_show = [
 if not cols_to_show:
     cols_to_show = ["text"]
 
-st.dataframe(df[df["cluster"] == sel_cluster][cols_to_show].head(50), use_container_width=True)
+st.dataframe(prettify_columns(df[df["cluster"] == sel_cluster][cols_to_show].head(50)), use_container_width=True)
 
 st.download_button(
     "Download themes CSV",
-    data=df_to_csv_bytes(themes_df),
+    data=df_to_csv_bytes(full_pretty),
     file_name="themes.csv",
     mime="text/csv",
 )
@@ -359,8 +407,3 @@ st.download_button(
     file_name="clustered_feedback.csv",
     mime="text/csv",
 )
-
-
-
-
-

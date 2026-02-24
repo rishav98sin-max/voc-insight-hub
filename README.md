@@ -14,7 +14,7 @@ This project demonstrates end-to-end Product Thinking: turning unstructured VoC 
 
 ---
 
-## Why this matters (Product context)
+## Why this matters 
 In real teams, feedback lives across support tickets, surveys, reviews, and sales notes. The challenge isn’t “getting feedback”—it’s synthesizing it into:
 - Clear themes
 - A prioritization rationale

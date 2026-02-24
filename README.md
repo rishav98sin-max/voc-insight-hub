@@ -1,4 +1,3 @@
-# voc-insight-hub
 VoC Insight Hub
 # VoC Insight Hub — From Customer Feedback to Prioritized Product Themes (Streamlit)
 
